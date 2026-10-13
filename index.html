@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ศูนย์รวมลิงก์สำหรับนิสิต</title>
+<meta name="description" content="รวมเว็บไซต์ ระบบ และช่องทางสำคัญของมหาวิทยาลัย คณะ และองค์กรนิสิตไว้ในที่เดียว">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="public">
+  <header class="hdr">
+    <div class="container hdr-in">
+      <button type="button" class="brand" data-go="home" aria-label="หน้าแรก"><span class="logo"></span><span class="brand-name"></span></button>
+      <nav class="nav-d" aria-label="เมนูหลัก">
+        <button type="button" data-go="home" data-nav="home">หน้าแรก</button>
+        <button type="button" data-go="categories" data-nav="categories">หมวดหมู่</button>
+        <button type="button" data-go="favorites" data-nav="favorites">รายการโปรด<span class="count-pill" id="fav-n" hidden></span></button>
+        <button type="button" data-go="submit" data-nav="submit">เสนอเว็บไซต์</button>
+      </nav>
+      <div class="hdr-actions">
+        <button type="button" class="icon-btn" data-go="admin" id="admin-btn" aria-label="เข้าสู่ระบบผู้ดูแล" title="ผู้ดูแลระบบ"></button>
+        <button type="button" class="icon-btn menu-btn" data-act="menu" id="menu-btn" aria-label="เปิดเมนู" aria-expanded="false"></button>
+      </div>
+    </div>
+    <nav class="mnav" id="mnav" hidden aria-label="เมนูมือถือ">
+      <button type="button" data-go="home" data-nav="home">หน้าแรก</button>
+      <button type="button" data-go="categories" data-nav="categories">หมวดหมู่</button>
+      <button type="button" data-go="favorites" data-nav="favorites">รายการโปรด</button>
+      <button type="button" data-go="submit" data-nav="submit">เสนอเว็บไซต์</button>
+    </nav>
+  </header>
+  <main id="view" class="container"></main>
+  <footer class="ftr" id="footer"></footer>
+</div>
+
+<div id="adminwrap" class="alayout" hidden>
+  <div class="abar">
+    <button type="button" class="brand" data-go="a-dashboard"><span class="logo"></span><span class="brand-name"></span></button>
+    <button type="button" class="icon-btn menu-btn" data-act="admin-menu" id="admin-menu-btn" aria-label="เปิดเมนูผู้ดูแล" aria-expanded="false" style="margin-left:auto"></button>
+  </div>
+  <aside class="side" id="side">
+    <button type="button" class="brand" data-go="a-dashboard"><span class="logo"></span><span class="brand-name"></span></button>
+    <nav class="snav" aria-label="เมนูผู้ดูแล" id="snav"></nav>
+  </aside>
+  <main class="amain" id="aview"></main>
+</div>
+
+<div id="modal-root"></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
