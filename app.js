@@ -474,7 +474,6 @@ build["admin-login"] = () => {
     '<div class="field"><label for="lf-pw">รหัสผ่าน</label><div style="display:flex;gap:8px"><input id="lf-pw" type="password" autocomplete="current-password" style="flex:1;min-width:0"><button type="button" class="btn" data-act="toggle-pw" id="lf-toggle" aria-label="แสดงรหัสผ่าน">แสดง</button></div></div>' +
     '<p class="note err" id="lf-err" role="alert" hidden></p><p class="msg" id="lf-msg" role="status"></p>' +
     '<button type="submit" class="btn primary" id="lf-go">เข้าสู่ระบบ</button>' +
-    '<button type="button" class="textbtn" data-act="forgot" style="align-self:center">ลืมรหัสผ่าน</button></form>' +
     '<button type="button" class="btn" data-go="home">กลับหน้าแรก</button></div></div>');
 };
 fill["admin-login"] = () => { if (S.isAdmin) go("a-dashboard"); };
