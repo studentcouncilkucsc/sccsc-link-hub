@@ -3,7 +3,9 @@ const DEFAULT_SETTINGS = {
   siteName: "KUSC.CSC Connect",
   tagline: "รวมช่องทางติดต่อของหน่วยงาน คณะ และองค์กรนิสิตไว้ในที่เดียว",
   about: "รวบรวมช่องทางติดต่อ เช่น Facebook Instagram LINE อีเมล เบอร์โทร และเว็บไซต์ ของมหาวิทยาลัย คณะ หน่วยงาน และองค์กรนิสิต",
-  contact: ""
+  contact: "",
+  adminFacebook: "",
+  adminInstagram: ""
 };
 /* จำนวนรายการในส่วน "แนะนำ" หน้าแรก */
 const HOME_LIMIT = 10;
@@ -289,7 +291,7 @@ function fillChrome() {
 function adminLinksHtml() {
   const a = (label, url, icon) => url ? '<a class="sb" href="' + esc(safeUrl(url)) + '" target="_blank" rel="noopener noreferrer">' + ic(icon, 18) + "<span>" + label + "</span></a>" : "";
   const mail = S.settings.contact ? '<a class="sb" href="mailto:' + esc(S.settings.contact) + '">' + ic("mail", 18) + "<span>" + esc(S.settings.contact) + "</span></a>" : "";
-  const links = a("Facebook", ADMIN_LINKS.facebook, "facebook") + a("Instagram", ADMIN_LINKS.instagram, "instagram") + mail;
+  const links = a("Facebook", S.settings.adminFacebook || ADMIN_LINKS.facebook, "facebook") + a("Instagram", S.settings.adminInstagram || ADMIN_LINKS.instagram, "instagram") + mail;
   if (links) return '<div style="display:flex;flex-wrap:wrap;gap:8px">' + links + "</div>";
   return '<p class="muted">เพิ่มช่องทางติดต่อหรือแจ้งแก้ไขได้ที่แบบฟอร์ม</p>';
 }
@@ -666,16 +668,20 @@ build["a-settings"] = () => {
   const st = S.settings;
   setHtml("#aview", aHead("ตั้งค่า", "ข้อความและช่องทางติดต่อผู้ดูแลที่แสดงในส่วนท้ายเว็บ") + '<div class="panel" style="max-width:640px"><form id="stf" class="form" novalidate>' +
     '<div class="field"><label for="st-about">คำอธิบายส่วนท้าย</label><textarea id="st-about" maxlength="200">' + esc(st.about) + '</textarea></div>' +
+    '<div class="row2"><div class="field"><label for="st-fb">Facebook ผู้ดูแล</label><input id="st-fb" maxlength="300" placeholder="ลิงก์เพจหรือชื่อเพจ" autocomplete="off" value="' + esc(st.adminFacebook) + '"></div>' +
+    '<div class="field"><label for="st-ig">Instagram ผู้ดูแล</label><input id="st-ig" maxlength="300" placeholder="@ชื่อบัญชี หรือลิงก์" autocomplete="off" value="' + esc(st.adminInstagram) + '"></div></div>' +
     '<div class="field"><label for="st-contact">อีเมลติดต่อผู้ดูแล</label><input id="st-contact" type="email" inputmode="email" maxlength="100" placeholder="name@example.com" autocomplete="off" value="' + esc(st.contact) + '"><span class="hint">แสดงที่ส่วนท้ายเว็บในหัวข้อ “ติดต่อผู้ดูแล” เว้นว่างได้</span></div>' +
     '<div class="actions"><button type="submit" class="btn primary" id="st-save">บันทึก</button><span class="msg" id="st-msg" role="status"></span></div></form></div>');
 };
 fill["a-settings"] = () => {};
 async function saveSettings() {
   const msg = $("#st-msg"), say = (t, k) => { msg.textContent = t || ""; msg.className = "msg" + (k ? " " + k : ""); };
-  const v = { about: $("#st-about").value.trim(), contact: $("#st-contact").value.trim() };
+  const v = { about: $("#st-about").value.trim(), contact: $("#st-contact").value.trim(), fb: socialUrl("facebook", $("#st-fb").value), ig: socialUrl("instagram", $("#st-ig").value) };
+  if (v.fb === null || (v.fb && !hostIn(v.fb, ["facebook.com", "fb.com", "fb.me", "m.me"]))) return say("ลิงก์ Facebook ไม่ถูกต้อง ใส่ลิงก์เพจหรือชื่อเพจ", "err");
+  if (v.ig === null || (v.ig && !hostIn(v.ig, ["instagram.com", "instagr.am"]))) return say("ลิงก์ Instagram ไม่ถูกต้อง ใส่ @ชื่อบัญชี หรือลิงก์", "err");
   if (v.contact && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.contact)) return say("อีเมลไม่ถูกต้อง", "err");
   const btn = $("#st-save"); btn.disabled = true;
-  try { must(await sb.from("settings").update({ about: v.about, contact: v.contact }).eq("id", 1)); await loadAll(); refresh(); say("บันทึกแล้ว", "ok"); } catch (err) { say(errText(err), "err"); }
+  try { must(await sb.from("settings").update({ about: v.about, contact: v.contact, admin_facebook: v.fb, admin_instagram: v.ig }).eq("id", 1)); await loadAll(); refresh(); say("บันทึกแล้ว", "ok"); } catch (err) { say(errText(err), "err"); }
   btn.disabled = false;
 }
 
@@ -803,7 +809,7 @@ async function loadAll() {
     S.cats = c.data.map(catFromRow);
     S.sites = s.data.map(siteFromRow);
     const x = st.data || {};
-    S.settings = { siteName: x.site_name || DEFAULT_SETTINGS.siteName, tagline: x.tagline || DEFAULT_SETTINGS.tagline, about: x.about || DEFAULT_SETTINGS.about, contact: x.contact || "" };
+    S.settings = { siteName: x.site_name || DEFAULT_SETTINGS.siteName, tagline: x.tagline || DEFAULT_SETTINGS.tagline, about: x.about || DEFAULT_SETTINGS.about, contact: x.contact || "", adminFacebook: x.admin_facebook || "", adminInstagram: x.admin_instagram || "" };
     S.settingsReady = true;
     saveCachedSettings();
     S.ready = { sites: true, cats: true };
