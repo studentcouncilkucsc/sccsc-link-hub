@@ -49,7 +49,6 @@ const ICONS = {
   phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
   mail:'<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/>',
   message:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
-  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/>'
 };
 function ic(n, s, fill) {
   s = s || 20;
@@ -149,7 +148,7 @@ function errText(e) {
   if (/too_many|rate/i.test(m)) return "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่";
   if (/row-level security|permission|42501|JWT/i.test(m)) return "ไม่มีสิทธิ์ทำรายการนี้ ลองเข้าสู่ระบบใหม่";
   if (/foreign key|23503/i.test(m)) return "ลบไม่ได้ เพราะยังมีข้อมูลที่อ้างอิงอยู่";
-  if (/not_owner/i.test(m)) return "ชื่อ-นามสกุลหรือช่องทางติดต่อไม่ตรงกับที่ใช้ตอนเพิ่มรายการนี้ (หรือรายการนี้ไม่ได้เปิดให้ขอลบ) ลองตรวจสอบอีกครั้งหรือติดต่อผู้ดูแล";
+  if (/not_owner/i.test(m)) return "ชื่อ-นามสกุลหรือช่องทางติดต่อไม่ตรงกับที่ใช้ตอนเพิ่มรายการนี้ (หรือรายการนี้ผู้ดูแลเป็นคนเพิ่ม) ลองตรวจสอบอีกครั้งหรือติดต่อผู้ดูแล";
   if (/duplicate key|23505|unique/i.test(m)) return "มีหน่วยงานชื่อนี้ หรือช่องทางนี้ (Facebook/Instagram) อยู่ในระบบแล้ว";
   return "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง";
 }
@@ -212,11 +211,6 @@ function confirmDialog(o) {
 }
 
 /* ---------- ส่วนประกอบ ---------- */
-function logoHtml(s, small) {
-  const cls = "mono-logo" + (small ? " sm" : "");
-  if (s.logo && /^data:image\//.test(s.logo)) return '<span class="' + cls + '"><img src="' + esc(s.logo) + '" alt=""></span>';
-  return '<span class="' + cls + '" aria-hidden="true">' + esc((s.name || "?").trim().charAt(0).toUpperCase()) + "</span>";
-}
 function cardHtml(s, o) {
   o = o || {};
   const fav = S.favs.includes(s.id);
@@ -224,7 +218,7 @@ function cardHtml(s, o) {
   const cc = (icon, text, href, ext) => '<a class="cc" href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener noreferrer"' : "") + ">" + ic(icon, 16) + "<span>" + esc(text) + "</span></a>";
   const social = sb("Facebook", s.facebook, "facebook") + sb("Instagram", s.instagram, "instagram");
   const others = (s.line ? cc("message", "LINE " + s.line, lineUrl(s.line), true) : "") + (s.phone ? cc("phone", s.phone, telHref(s.phone)) : "") + (s.email ? cc("mail", s.email, "mailto:" + s.email) : "") + (s.url ? cc("globe", hostOf(s.url) || "เว็บไซต์", safeUrl(s.url), true) : "");
-  return '<article class="card"><div class="card-top">' + (s.logo && /^data:image\//.test(s.logo) ? logoHtml(s) : "") +
+  return '<article class="card"><div class="card-top">' +
     '<div class="card-title"><h3>' + esc(s.name) + "</h3><span>" + esc(catName(s.categoryId)) + "</span></div>" +
     '<button type="button" class="fav" data-act="fav" data-id="' + esc(s.id) + '" aria-pressed="' + fav + '" aria-label="' + (fav ? "นำออกจากรายการโปรด" : "เพิ่มในรายการโปรด") + " " + esc(s.name) + '">' + ic("star", 20, fav) + "</button></div>" +
     '<p class="desc">' + esc(s.desc) + "</p>" +
@@ -405,7 +399,6 @@ fill.favorites = () => {
 
 /* ---------- เพิ่มช่องทางติดต่อ / แจ้งแก้ไข ---------- */
 build.submit = () => {
-  window.__ulogo = "";
   setHtml("#view", '<div class="page-head"><h1>เพิ่มช่องทางติดต่อ</h1><p>เพิ่มหน่วยงานหรือองค์กรใหม่ หรือแจ้งแก้ไขช่องทางที่มีอยู่ แอดมินจะตรวจสอบก่อนแสดงบนหน้าเว็บ</p></div>' +
     '<div class="panel" style="max-width:720px"><p class="note err" id="f-lock" hidden style="margin-bottom:14px">ส่งคำขอไม่ได้ในตอนนี้ เพราะเชื่อมต่อข้อมูลไม่สำเร็จ</p>' +
     '<form id="f" class="form" novalidate>' +
@@ -415,7 +408,6 @@ build.submit = () => {
     '<div class="field"><label for="f-desc">คำอธิบายสั้นๆ</label><textarea id="f-desc" maxlength="200"></textarea><span class="hint" id="f-count">0 / 200</span></div>' +
     '<div class="field"><label for="f-cat">หมวดหมู่</label><select id="f-cat"></select></div>' +
     channelFields("f") +
-    '<div class="field"><span class="lab">รูปโลโก้ขององค์กร (ไม่บังคับ)</span><div class="logo-pick"><span id="f-prev"></span><button type="button" class="btn sm" data-act="pick-ulogo">' + ic("upload", 15) + ' เลือกรูป</button><button type="button" class="btn sm" data-act="rm-ulogo" id="f-rm" hidden>ลบรูป</button><input type="file" id="f-file" accept="image/*" hidden></div><span class="hint">ระบบจะย่อและตัดเป็นรูปจัตุรัสให้ ขนาดไฟล์ไม่เกิน 5 MB ถ้าแจ้งแก้ไขแล้วไม่เลือกรูป จะใช้รูปเดิมของรายการ</span></div>' +
     '<div class="field"><label for="f-rname">ชื่อ-นามสกุลของคุณ</label><input id="f-rname" maxlength="80" placeholder="เช่น สมชาย ใจดี" autocomplete="name"><span class="hint">ใช้ให้แอดมินตรวจสอบว่าเป็นผู้เกี่ยวข้อง เห็นเฉพาะแอดมิน ไม่แสดงบนหน้าเว็บ</span></div>' +
     '<div class="field"><label for="f-contact">ช่องทางติดต่อกลับถึงคุณ</label><input id="f-contact" maxlength="80" placeholder="อีเมลหรือเบอร์โทรศัพท์" autocomplete="off"><span class="hint">เห็นเฉพาะแอดมิน ไม่แสดงบนหน้าเว็บ</span></div>' +
     '<div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true"><label for="f-hp">อย่ากรอกช่องนี้</label><input id="f-hp" tabindex="-1" autocomplete="off"></div>' +
@@ -423,7 +415,6 @@ build.submit = () => {
     '<h2 class="sec-head" style="margin-top:32px;font-size:1.1rem;color:var(--navy)">คำขอของฉัน</h2><div class="list" id="mine" style="max-width:720px"></div>');
 };
 fill.submit = () => {
-  paintUserLogoPrev();
   const can = !!S.db;
   $("#f-lock").hidden = can || !S.db;
   $$("#f input,#f select,#f textarea,#f button").forEach(el => { el.disabled = !can; });
@@ -436,11 +427,6 @@ fill.submit = () => {
     return '<div class="item"><div class="item-head"><span class="tag ' + (st === "approved" ? "ok" : st === "rejected" ? "err" : "warn") + '">' + label + '</span><span class="tag">' + (r.type === "edit" ? "แจ้งแก้ไข" : r.type === "delete" ? "ขอลบ" : "เพิ่มรายการ") + "</span><strong>" + esc(r.name) + '</strong><span class="small muted">' + esc(fmtDate(r.createdAt)) + '</span></div><span class="small muted">' + esc(catName(r.categoryId)) + "</span>" + (d && d.note ? '<p class="small">ข้อความจากแอดมิน: ' + esc(d.note) + "</p>" : "") + "</div>";
   }).join("") : emptyHtml("inbox", "ยังไม่มีคำขอ", "คำขอที่ส่งแล้วจะแสดงสถานะที่นี่"));
 };
-function paintUserLogoPrev() {
-  const has = !!window.__ulogo;
-  setHtml("#f-prev", has ? logoHtml({ name: "", logo: window.__ulogo }) : "");
-  const rm = $("#f-rm"); if (rm) rm.hidden = !has;
-}
 function paintSiteOptions() {
   const el = $("#f-site"); if (!el) return;
   const del = curType() === "delete", prev = el.value;
@@ -500,11 +486,11 @@ async function submitRequest() {
   const btn = $("#f-submit"); btn.disabled = true; say("กำลังส่ง…");
   try {
     if (($("#f-hp") || {}).value) { say("ส่งคำขอแล้ว รอแอดมินตรวจสอบ", "ok"); btn.disabled = false; return; }
-    must(await sb.from("requests").insert({ type, site_id: type === "add" ? null : siteId, name: type === "delete" ? site.name : name, description: desc, category_id: type === "delete" ? site.categoryId : categoryId, facebook: v.facebook, instagram: v.instagram, email: v.email, phone: v.phone, line: v.line, url: v.url, contact, requester_name: requesterName, logo: window.__ulogo || "", client_token: getToken() }));
+    must(await sb.from("requests").insert({ type, site_id: type === "add" ? null : siteId, name: type === "delete" ? site.name : name, description: desc, category_id: type === "delete" ? site.categoryId : categoryId, facebook: v.facebook, instagram: v.instagram, email: v.email, phone: v.phone, line: v.line, url: v.url, contact, requester_name: requesterName, client_token: getToken() }));
     await loadMine(); refresh();
     S.lastSubmit = Date.now();
     say("ส่งคำขอแล้ว รอแอดมินตรวจสอบ", "ok");
-    $("#f").reset(); window.__ulogo = ""; paintUserLogoPrev(); setType("add"); $("#f-count").textContent = "0 / 200";
+    $("#f").reset(); setType("add"); $("#f-count").textContent = "0 / 200";
   } catch (err) { say(errText(err), "err"); }
   btn.disabled = false;
 }
@@ -565,7 +551,7 @@ build["a-dashboard"] = () => { setHtml("#aview", aHead("Dashboard", "ภาพ�
 fill["a-dashboard"] = () => {
   const pend = pendingList().length;
   setHtml("#a-stats", '<div class="stats"><div class="stat"><span>รายการทั้งหมด</span><b>' + S.sites.length + '</b></div><div class="stat"><span>หมวดหมู่</span><b>' + cats().length + '</b></div><div class="stat"><span>รายการแนะนำ</span><b>' + S.sites.filter(s => s.featured).length + '</b></div><div class="stat"><span>คำขอรออนุมัติ</span><b>' + pend + "</b></div></div>");
-  const li = (s, ts) => '<li>' + logoHtml(s, true) + '<div class="t"><strong>' + esc(s.name) + '</strong><span class="small muted">' + esc(catName(s.categoryId)) + " · " + esc(fmtDate(ts)) + "</span></div></li>";
+  const li = (s, ts) => '<li><div class="t"><strong>' + esc(s.name) + '</strong><span class="small muted">' + esc(catName(s.categoryId)) + " · " + esc(fmtDate(ts)) + "</span></div></li>";
   const nw = S.sites.slice().sort(byNew).slice(0, 5);
   const ed = S.sites.filter(s => s.updatedAt && s.updatedAt - (s.createdAt || 0) > 60000).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
   setHtml("#a-new", nw.length ? nw.map(s => li(s, s.createdAt)).join("") : '<li class="muted">ยังไม่มีรายการ</li>');
@@ -580,12 +566,12 @@ fill["a-sites"] = () => {
   const q = S.adminQ.trim().toLowerCase();
   const list = S.sites.filter(s => matches(s, q)).sort(byNew);
   if (!list.length) return setHtml("#a-list", S.ready.sites ? emptyHtml("globe", q ? "ไม่พบรายการที่ตรงกัน" : "ยังไม่มีรายการ", q ? "ลองค้นหาด้วยคำอื่น" : "กด “เพิ่มรายการ” เพื่อเริ่มต้น") : emptyHtml("globe", "กำลังโหลด…", ""));
-  const stTag = s => (s.visible === false ? '<span class="tag">ซ่อน</span>' : '<span class="tag ok">แสดง</span>') + (s.adminOwned ? '<span class="tag">แอดมินเพิ่ม</span>' : "");
+  const stTag = s => s.visible === false ? '<span class="tag">ซ่อน</span>' : '<span class="tag ok">แสดง</span>';
   const acts = s => '<div class="row-actions"><button type="button" class="btn sm" data-act="toggle-vis" data-id="' + esc(s.id) + '">' + (s.visible === false ? "แสดง" : "ซ่อน") + '</button><button type="button" class="btn sm" data-act="edit-site" data-id="' + esc(s.id) + '">' + ic("edit", 15) + ' แก้ไข</button><button type="button" class="btn sm danger" data-act="del-site" data-id="' + esc(s.id) + '">' + ic("trash", 15) + " ลบ</button></div>";
-  setHtml("#a-list", '<div class="only-d"><div class="tbl-wrap"><table><thead><tr><th></th><th>ชื่อหน่วยงาน</th><th>หมวดหมู่</th><th>ช่องทาง</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th></th></tr></thead><tbody>' +
-    list.map(s => "<tr><td>" + logoHtml(s, true) + "</td><td><strong>" + esc(s.name) + "</strong></td><td>" + esc(catName(s.categoryId)) + '</td><td>' + chanIcons(s) + "</td><td>" + stTag(s) + "</td><td>" + esc(fmtDate(s.createdAt)) + '</td><td class="ta-r">' + acts(s) + "</td></tr>").join("") +
+  setHtml("#a-list", '<div class="only-d"><div class="tbl-wrap"><table><thead><tr><th>ชื่อหน่วยงาน</th><th>หมวดหมู่</th><th>ช่องทาง</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th></th></tr></thead><tbody>' +
+    list.map(s => "<tr><td><strong>" + esc(s.name) + "</strong></td><td>" + esc(catName(s.categoryId)) + '</td><td>' + chanIcons(s) + "</td><td>" + stTag(s) + "</td><td>" + esc(fmtDate(s.createdAt)) + '</td><td class="ta-r">' + acts(s) + "</td></tr>").join("") +
     '</tbody></table></div></div><div class="only-m list">' +
-    list.map(s => '<div class="item"><div class="card-top">' + logoHtml(s) + '<div class="card-title"><h3>' + esc(s.name) + "</h3><span>" + esc(catName(s.categoryId)) + '</span></div>' + stTag(s) + '</div>' + chanIcons(s) + '<span class="small muted">เพิ่มเมื่อ ' + esc(fmtDate(s.createdAt)) + "</span>" + acts(s) + "</div>").join("") + "</div>");
+    list.map(s => '<div class="item"><div class="card-top"><div class="card-title"><h3>' + esc(s.name) + "</h3><span>" + esc(catName(s.categoryId)) + '</span></div>' + stTag(s) + '</div>' + chanIcons(s) + '<span class="small muted">เพิ่มเมื่อ ' + esc(fmtDate(s.createdAt)) + "</span>" + acts(s) + "</div>").join("") + "</div>");
 };
 
 function openSiteForm(id) {
@@ -597,36 +583,8 @@ function openSiteForm(id) {
     '<div class="field"><label for="sf-desc">คำอธิบาย</label><textarea id="sf-desc" maxlength="200">' + v("desc") + "</textarea></div>" +
     '<div class="field"><label for="sf-cat">หมวดหมู่</label><select id="sf-cat">' + catOptionsHtml(s && s.categoryId) + "</select></div>" +
     channelFields("sf", s) +
-    '<div class="field"><span class="lab">Logo / Icon</span><div class="logo-pick"><span id="sf-prev"></span><button type="button" class="btn sm" data-act="pick-logo">' + ic("upload", 15) + ' เลือกรูป</button><button type="button" class="btn sm" data-act="rm-logo" id="sf-rm">ลบรูป</button><input type="file" id="sf-file" accept="image/*" hidden></div><span class="hint">ถ้าไม่ใส่ จะแสดงตัวอักษรแรกของชื่อแทน</span></div>' +
     '<label class="switch"><input type="checkbox" id="sf-vis"' + (!s || s.visible !== false ? " checked" : "") + '> แสดงบนหน้าเว็บ</label>' +
-    '<label class="switch"><input type="checkbox" id="sf-adm"' + (!s || s.adminOwned ? " checked" : "") + '> แอดมินเป็นคนเพิ่ม (ใครก็ขอลบได้ แอดมินยังต้องอนุมัติ)</label>' +
     '<div class="actions"><span class="msg" id="sf-msg" role="status" style="margin-right:auto"></span><button type="button" class="btn" data-act="m-close">ยกเลิก</button><button type="submit" class="btn primary" id="sf-save">บันทึก</button></div></form>');
-  window.__logo = s && s.logo || "";
-  paintLogoPrev();
-}
-function paintLogoPrev() {
-  const name = ($("#sf-name") || {}).value || "?";
-  setHtml("#sf-prev", logoHtml({ name, logo: window.__logo }));
-  const rm = $("#sf-rm"); if (rm) rm.hidden = !window.__logo;
-}
-function readLogo(file) {
-  return new Promise((res, rej) => {
-    if (!file || file.size > 5 * 1024 * 1024) return rej(new Error("big"));
-    const fr = new FileReader();
-    fr.onerror = () => rej(new Error("read"));
-    fr.onload = () => {
-      const img = new Image();
-      img.onerror = () => rej(new Error("img"));
-      img.onload = () => {
-        const n = 128, c = document.createElement("canvas"); c.width = c.height = n;
-        const sz = Math.min(img.width, img.height) || n, sx = (img.width - sz) / 2, sy = (img.height - sz) / 2;
-        c.getContext("2d").drawImage(img, sx, sy, sz, sz, 0, 0, n, n);
-        res(c.toDataURL("image/png"));
-      };
-      img.src = fr.result;
-    };
-    fr.readAsDataURL(file);
-  });
 }
 async function saveSite() {
   const say = (t, k) => { const m = $("#sf-msg"); m.textContent = t || ""; m.className = "msg" + (k ? " " + k : ""); };
@@ -635,7 +593,7 @@ async function saveSite() {
   if (name.length < 2) return say("ใส่ชื่ออย่างน้อย 2 ตัวอักษร", "err");
   if (!desc) return say("ใส่คำอธิบายสั้นๆ", "err");
   const ch = readChannels("sf"); if (ch.error) return say(ch.error, "err");
-  const f = Object.assign({ name, desc, categoryId, logo: window.__logo || "", visible: $("#sf-vis").checked, adminOwned: $("#sf-adm").checked }, ch.v);
+  const f = Object.assign({ name, desc, categoryId, visible: $("#sf-vis").checked }, ch.v);
   const dup = findDup(f, id);
   if (dup) return say("ซ้ำกับรายการ “" + dup.name + "” (ชื่อหรือช่องทางเหมือนกัน)", "err");
   const btn = $("#sf-save"); btn.disabled = true; say("กำลังบันทึก…");
@@ -689,7 +647,7 @@ async function moveCat(id, dir) {
 build["a-featured"] = () => { setHtml("#aview", aHead("รายการแนะนำ", "รายการที่เปิดสวิตช์จะขึ้นก่อนในส่วน “แนะนำ” ของหน้าแรก (สูงสุด 10 รายการ) ที่เหลือระบบเติมด้วยรายการที่เพิ่มใหม่ล่าสุดให้ครบอัตโนมัติ") + '<div class="list" id="a-feat"></div>'); };
 fill["a-featured"] = () => {
   const list = S.sites.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "th"));
-  setHtml("#a-feat", list.length ? list.map(s => '<div class="item"><div class="cat-row">' + logoHtml(s, true) + '<div class="info"><strong>' + esc(s.name) + '</strong><span class="small muted">' + esc(catName(s.categoryId)) + (s.visible === false ? " · ซ่อนอยู่" : "") + '</span></div><label class="switch"><input type="checkbox" class="js-feat" data-id="' + esc(s.id) + '"' + (s.featured ? " checked" : "") + ' aria-label="แนะนำ ' + esc(s.name) + '"> แนะนำ</label></div></div>').join("") : emptyHtml("star", "ยังไม่มีรายการ", "เพิ่มรายการก่อนแล้วค่อยเลือกรายการแนะนำ"));
+  setHtml("#a-feat", list.length ? list.map(s => '<div class="item"><div class="cat-row"><div class="info"><strong>' + esc(s.name) + '</strong><span class="small muted">' + esc(catName(s.categoryId)) + (s.visible === false ? " · ซ่อนอยู่" : "") + '</span></div><label class="switch"><input type="checkbox" class="js-feat" data-id="' + esc(s.id) + '"' + (s.featured ? " checked" : "") + ' aria-label="แนะนำ ' + esc(s.name) + '"> แนะนำ</label></div></div>').join("") : emptyHtml("star", "ยังไม่มีรายการ", "เพิ่มรายการก่อนแล้วค่อยเลือกรายการแนะนำ"));
 };
 
 build["a-requests"] = () => { setHtml("#aview", aHead("คำขอจากผู้ใช้", "ตรวจสอบก่อนแสดงบนหน้าเว็บ") + '<div class="list" id="a-queue"></div>'); };
@@ -707,7 +665,7 @@ fill["a-requests"] = () => {
     const row = (label, key, val, show) => { const old = cur && String(cur[key] || "") !== String(val || "") ? '<span class="old">' + esc(cur[key] || "-") + "</span>" : ""; return "<dt>" + label + "</dt><dd>" + old + esc(show || val || "-") + "</dd>"; };
     return '<div class="item" data-req="' + esc(r.id) + '"><div class="item-head"><span class="tag warn">รออนุมัติ</span><span class="tag">' + (r.type === "edit" ? "แจ้งแก้ไข" : r.type === "delete" ? "ขอลบ" : "เพิ่มรายการ") + "</span><strong>" + esc(r.name) + '</strong><span class="small muted">' + esc(fmtDate(r.createdAt)) + '</span></div><dl class="kv">' +
       row("ชื่อ", "name", r.name) + row("อธิบาย", "desc", r.desc) + row("หมวด", "categoryId", r.categoryId, catName(r.categoryId)) + row("Facebook", "facebook", r.facebook) + row("Instagram", "instagram", r.instagram) + row("LINE", "line", r.line) + row("โทร", "phone", r.phone) + row("อีเมล", "email", r.email) + row("เว็บไซต์", "url", r.url) +
-      '<dt>รูปโลโก้</dt><dd>' + (r.logo ? logoHtml({ name: r.name, logo: r.logo }, true) : '<span class="muted">' + (cur ? "ไม่ได้ส่งรูปใหม่ (ใช้รูปเดิม)" : "ไม่มีรูป") + "</span>") + '</dd><dt>ชื่อ-นามสกุลผู้ส่ง</dt><dd>' + esc(r.requesterName || "-") + '</dd><dt>ผู้ส่งติดต่อ</dt><dd>' + esc(r.contact) + "</dd></dl>" +
+      '<dt>ชื่อ-นามสกุลผู้ส่ง</dt><dd>' + esc(r.requesterName || "-") + '</dd><dt>ผู้ส่งติดต่อ</dt><dd>' + esc(r.contact) + "</dd></dl>" +
       (cur ? '<p class="small muted">ถ้าอนุมัติ ข้อมูลเดิมของรายการนี้จะถูกแทนที่ด้วยข้อมูลใหม่ (ช่องที่ต่างจากเดิมมีค่าเดิมกำกับไว้) ส่วนชื่อและช่องทางติดต่อของผู้ส่งจะไม่ถูกนำไปแสดงบนเว็บ</p>' : "") +
       (r.type === "edit" && !cur ? '<p class="small muted">รายการที่ขอแก้ไขถูกลบไปแล้ว ถ้าอนุมัติจะถูกเพิ่มเป็นรายการใหม่</p>' : "") +
       '<div class="review"><input type="text" maxlength="120" placeholder="ข้อความถึงผู้ส่ง (ไม่บังคับ)" aria-label="ข้อความถึงผู้ส่ง" id="note-' + esc(r.id) + '"><button type="button" class="btn primary" data-act="approve" data-id="' + esc(r.id) + '">อนุมัติ</button><button type="button" class="btn danger" data-act="reject" data-id="' + esc(r.id) + '">ปฏิเสธ</button></div></div>';
@@ -727,12 +685,12 @@ async function decide(id, approve) {
         must(await sb.from("sites").delete().eq("id", siteId));
       }
     } else if (approve) {
-      const f = { name: req.name, desc: req.desc, categoryId: req.categoryId, url: req.url || "", facebook: req.facebook || "", instagram: req.instagram || "", email: req.email || "", phone: req.phone || "", line: req.line || "", logo: req.logo || "", visible: true };
+      const f = { name: req.name, desc: req.desc, categoryId: req.categoryId, url: req.url || "", facebook: req.facebook || "", instagram: req.instagram || "", email: req.email || "", phone: req.phone || "", line: req.line || "", visible: true };
       const isEdit = req.type === "edit" && S.sites.some(s => s.id === siteId);
       const dup = findDup(f, isEdit ? siteId : "");
       if (dup) { toast("ซ้ำกับรายการ “" + dup.name + "” อนุมัติไม่ได้ ให้ปฏิเสธหรือแก้รายการเดิมแทน", "err"); refresh(); return; }
       if (isEdit) {
-        const row = siteToRow(f); if (!req.logo) delete row.logo; delete row.visible;
+        const row = siteToRow(f); delete row.visible;
         must(await sb.from("sites").update(row).eq("id", siteId));
       } else {
         const ins = must(await sb.from("sites").insert(Object.assign(siteToRow(f), { featured: false })).select("id").single());
@@ -800,10 +758,6 @@ document.addEventListener("click", async e => {
         try { must(await sb.from("sites").delete().eq("id", id)); await loadAll(); refresh(); toast("ลบแล้ว"); } catch (err) { toast(errText(err), "err"); }
       break;
     }
-    case "pick-logo": $("#sf-file").click(); break;
-    case "pick-ulogo": $("#f-file").click(); break;
-    case "rm-ulogo": window.__ulogo = ""; paintUserLogoPrev(); break;
-    case "rm-logo": window.__logo = ""; paintLogoPrev(); break;
     case "add-cat": openCatForm(); break;
     case "edit-cat": openCatForm(id); break;
     case "del-cat": {
@@ -838,7 +792,6 @@ document.addEventListener("input", e => {
   if (id === "sq") { S.q = e.target.value; fill.search(); }
   else if (id === "aq") { S.adminQ = e.target.value; fill["a-sites"](); }
   else if (id === "f-desc") $("#f-count").textContent = e.target.value.length + " / 200";
-  else if (id === "sf-name") paintLogoPrev();
 });
 document.addEventListener("change", async e => {
   const t = e.target;
@@ -847,12 +800,6 @@ document.addEventListener("change", async e => {
   else if (t.id === "s-sort") { S.sort = t.value; fill.search(); }
   else if (t.classList.contains("js-feat")) {
     try { must(await sb.from("sites").update({ featured: t.checked }).eq("id", t.dataset.id)); await loadAll(); refresh(); } catch (err) { t.checked = !t.checked; toast(errText(err), "err"); }
-  } else if (t.id === "f-file") {
-    try { window.__ulogo = await readLogo(t.files[0]); paintUserLogoPrev(); } catch (err) { toast("ใช้รูปนี้ไม่ได้ เลือกรูปขนาดไม่เกิน 5 MB", "err"); }
-    t.value = "";
-  } else if (t.id === "sf-file") {
-    try { window.__logo = await readLogo(t.files[0]); paintLogoPrev(); } catch (err) { toast("ใช้รูปนี้ไม่ได้ เลือกรูปขนาดไม่เกิน 5 MB", "err"); }
-    t.value = "";
   }
 });
 document.addEventListener("keydown", e => {
@@ -861,6 +808,9 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------- ข้อมูลจาก Supabase ---------- */
+/* เลือกเฉพาะคอลัมน์ที่ใช้ ไม่ดึงคอลัมน์ logo (ข้อมูลเดิมยังอยู่ในฐานข้อมูลแต่ไม่ถูกโหลดมา) */
+const SITE_COLS = "id,name,description,category_id,url,facebook,instagram,email,phone,line,visible,featured,created_at,updated_at";
+const REQUEST_COLS = "id,type,site_id,name,url,description,category_id,facebook,instagram,email,phone,line,contact,requester_name,status,admin_note,created_at";
 function must(res) { if (res && res.error) throw res.error; return res; }
 function getToken() {
   if (S.token) return S.token;
@@ -873,10 +823,10 @@ function getToken() {
   S.token = t;
   return t;
 }
-const siteFromRow = r => ({ id: r.id, name: r.name, desc: r.description, categoryId: r.category_id, url: r.url || "", facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", logo: r.logo || "", visible: r.visible, featured: r.featured, adminOwned: !!r.admin_owned, createdAt: Date.parse(r.created_at), updatedAt: Date.parse(r.updated_at) });
-const siteToRow = f => ({ name: f.name, description: f.desc, category_id: f.categoryId, url: f.url || "", facebook: f.facebook || "", instagram: f.instagram || "", email: f.email || "", phone: f.phone || "", line: f.line || "", logo: f.logo || "", visible: f.visible, admin_owned: f.adminOwned, updated_at: new Date().toISOString() });
+const siteFromRow = r => ({ id: r.id, name: r.name, desc: r.description, categoryId: r.category_id, url: r.url || "", facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", visible: r.visible, featured: r.featured, createdAt: Date.parse(r.created_at), updatedAt: Date.parse(r.updated_at) });
+const siteToRow = f => ({ name: f.name, description: f.desc, category_id: f.categoryId, url: f.url || "", facebook: f.facebook || "", instagram: f.instagram || "", email: f.email || "", phone: f.phone || "", line: f.line || "", visible: f.visible, updated_at: new Date().toISOString() });
 const catFromRow = r => ({ id: r.id, name: r.name, desc: r.description || "", order: r.sort_order || 0 });
-const reqFromRow = r => ({ id: r.id, type: r.type, siteId: r.site_id || "", name: r.name, url: r.url || "", desc: r.description, categoryId: r.category_id, facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", contact: r.contact || "", requesterName: r.requester_name || "", logo: r.logo || "", createdAt: Date.parse(r.created_at) });
+const reqFromRow = r => ({ id: r.id, type: r.type, siteId: r.site_id || "", name: r.name, url: r.url || "", desc: r.description, categoryId: r.category_id, facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", contact: r.contact || "", requesterName: r.requester_name || "", createdAt: Date.parse(r.created_at) });
 
 async function loadMine() {
   const r = await sb.rpc("my_requests", { token: getToken() });
@@ -890,7 +840,7 @@ async function loadAll() {
   try {
     const [c, s, st] = await Promise.all([
       sb.from("categories").select("*").order("sort_order"),
-      sb.from("sites").select("*").order("created_at", { ascending: false }),
+      sb.from("sites").select(SITE_COLS).order("created_at", { ascending: false }),
       sb.from("settings").select("*").eq("id", 1).maybeSingle()
     ]);
     must(c); must(s); must(st);
@@ -904,7 +854,7 @@ async function loadAll() {
     S.db = true;
     await loadMine();
     if (S.isAdmin) {
-      const r = must(await sb.from("requests").select("*").eq("status", "pending").order("created_at"));
+      const r = must(await sb.from("requests").select(REQUEST_COLS).eq("status", "pending").order("created_at"));
       S.allRequests = r.data.map(reqFromRow);
     } else S.allRequests = [];
   } catch (e) { console.error(e); S.db = false; S.settingsReady = true; }
