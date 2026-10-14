@@ -13,7 +13,7 @@ const HOME_LIMIT = 10;
 const HERO_LOGO = "logo.png";
 /* ข้อความลิขสิทธิ์และเครดิตท้ายเว็บ: แก้ในโค้ดเท่านั้น ไม่แสดงในหน้าตั้งค่า (เว้น CREDIT ว่างไว้ถ้าไม่ต้องการแสดง) */
 const COPYRIGHT_NAME = "KUSC.CSC";
-const CREDIT = "Paphawarin.sir";   // เช่น "จัดทำโดย สมชาย ใจดี"
+const CREDIT = "ชื่อผู้จัดทำ";   // เช่น "จัดทำโดย สมชาย ใจดี"
 /* ลิงก์ติดต่อผู้ดูแลที่ส่วนท้ายเว็บ: แก้ที่นี่ที่เดียว ไม่ต้องแก้ฐานข้อมูล (เว้นว่างได้) */
 const ADMIN_LINKS = {
   facebook: "",   // เช่น "https://www.facebook.com/ชื่อเพจ"
@@ -149,7 +149,7 @@ function errText(e) {
   if (/too_many|rate/i.test(m)) return "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่";
   if (/row-level security|permission|42501|JWT/i.test(m)) return "ไม่มีสิทธิ์ทำรายการนี้ ลองเข้าสู่ระบบใหม่";
   if (/foreign key|23503/i.test(m)) return "ลบไม่ได้ เพราะยังมีข้อมูลที่อ้างอิงอยู่";
-  if (/not_owner/i.test(m)) return "ชื่อ-นามสกุลหรือช่องทางติดต่อไม่ตรงกับที่ใช้ตอนเพิ่มรายการนี้ (หรือรายการนี้ผู้ดูแลเป็นคนเพิ่ม) ลองตรวจสอบอีกครั้งหรือติดต่อผู้ดูแล";
+  if (/not_owner/i.test(m)) return "ชื่อ-นามสกุลหรือช่องทางติดต่อไม่ตรงกับที่ใช้ตอนเพิ่มรายการนี้ (หรือรายการนี้ไม่ได้เปิดให้ขอลบ) ลองตรวจสอบอีกครั้งหรือติดต่อผู้ดูแล";
   if (/duplicate key|23505|unique/i.test(m)) return "มีหน่วยงานชื่อนี้ หรือช่องทางนี้ (Facebook/Instagram) อยู่ในระบบแล้ว";
   return "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง";
 }
@@ -448,7 +448,7 @@ function paintSiteOptions() {
   setOptions("#f-site", '<option value="">เลือกรายการ…</option>' + list.map(s => '<option value="' + esc(s.id) + '">' + esc(s.name) + "</option>").join(""));
   if (!list.some(s => s.id === prev)) el.value = "";
   const h = $("#f-site-hint");
-  if (h) h.textContent = del ? "ขอลบได้เฉพาะคนที่เพิ่มรายการนี้ กรอกชื่อ-นามสกุลและช่องทางติดต่อด้านล่างให้ตรงกับที่ใช้ตอนขอเพิ่มรายการ" : "";
+  if (h) h.textContent = del ? "ถ้าเป็นรายการที่ผู้ดูแลเพิ่ม ใครก็ขอลบได้ แต่ถ้าผู้ใช้ขอเพิ่มไว้ ต้องกรอกชื่อ-นามสกุลและช่องทางติดต่อด้านล่างให้ตรงกับที่ใช้ตอนขอเพิ่ม" : "";
 }
 function curType() { return $('input[name="f-type"]:checked').value; }
 function setType(t) {
@@ -580,7 +580,7 @@ fill["a-sites"] = () => {
   const q = S.adminQ.trim().toLowerCase();
   const list = S.sites.filter(s => matches(s, q)).sort(byNew);
   if (!list.length) return setHtml("#a-list", S.ready.sites ? emptyHtml("globe", q ? "ไม่พบรายการที่ตรงกัน" : "ยังไม่มีรายการ", q ? "ลองค้นหาด้วยคำอื่น" : "กด “เพิ่มรายการ” เพื่อเริ่มต้น") : emptyHtml("globe", "กำลังโหลด…", ""));
-  const stTag = s => s.visible === false ? '<span class="tag">ซ่อน</span>' : '<span class="tag ok">แสดง</span>';
+  const stTag = s => (s.visible === false ? '<span class="tag">ซ่อน</span>' : '<span class="tag ok">แสดง</span>') + (s.adminOwned ? '<span class="tag">แอดมินเพิ่ม</span>' : "");
   const acts = s => '<div class="row-actions"><button type="button" class="btn sm" data-act="toggle-vis" data-id="' + esc(s.id) + '">' + (s.visible === false ? "แสดง" : "ซ่อน") + '</button><button type="button" class="btn sm" data-act="edit-site" data-id="' + esc(s.id) + '">' + ic("edit", 15) + ' แก้ไข</button><button type="button" class="btn sm danger" data-act="del-site" data-id="' + esc(s.id) + '">' + ic("trash", 15) + " ลบ</button></div>";
   setHtml("#a-list", '<div class="only-d"><div class="tbl-wrap"><table><thead><tr><th></th><th>ชื่อหน่วยงาน</th><th>หมวดหมู่</th><th>ช่องทาง</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th></th></tr></thead><tbody>' +
     list.map(s => "<tr><td>" + logoHtml(s, true) + "</td><td><strong>" + esc(s.name) + "</strong></td><td>" + esc(catName(s.categoryId)) + '</td><td>' + chanIcons(s) + "</td><td>" + stTag(s) + "</td><td>" + esc(fmtDate(s.createdAt)) + '</td><td class="ta-r">' + acts(s) + "</td></tr>").join("") +
@@ -599,6 +599,7 @@ function openSiteForm(id) {
     channelFields("sf", s) +
     '<div class="field"><span class="lab">Logo / Icon</span><div class="logo-pick"><span id="sf-prev"></span><button type="button" class="btn sm" data-act="pick-logo">' + ic("upload", 15) + ' เลือกรูป</button><button type="button" class="btn sm" data-act="rm-logo" id="sf-rm">ลบรูป</button><input type="file" id="sf-file" accept="image/*" hidden></div><span class="hint">ถ้าไม่ใส่ จะแสดงตัวอักษรแรกของชื่อแทน</span></div>' +
     '<label class="switch"><input type="checkbox" id="sf-vis"' + (!s || s.visible !== false ? " checked" : "") + '> แสดงบนหน้าเว็บ</label>' +
+    '<label class="switch"><input type="checkbox" id="sf-adm"' + (!s || s.adminOwned ? " checked" : "") + '> แอดมินเป็นคนเพิ่ม (ใครก็ขอลบได้ แอดมินยังต้องอนุมัติ)</label>' +
     '<div class="actions"><span class="msg" id="sf-msg" role="status" style="margin-right:auto"></span><button type="button" class="btn" data-act="m-close">ยกเลิก</button><button type="submit" class="btn primary" id="sf-save">บันทึก</button></div></form>');
   window.__logo = s && s.logo || "";
   paintLogoPrev();
@@ -634,7 +635,7 @@ async function saveSite() {
   if (name.length < 2) return say("ใส่ชื่ออย่างน้อย 2 ตัวอักษร", "err");
   if (!desc) return say("ใส่คำอธิบายสั้นๆ", "err");
   const ch = readChannels("sf"); if (ch.error) return say(ch.error, "err");
-  const f = Object.assign({ name, desc, categoryId, logo: window.__logo || "", visible: $("#sf-vis").checked }, ch.v);
+  const f = Object.assign({ name, desc, categoryId, logo: window.__logo || "", visible: $("#sf-vis").checked, adminOwned: $("#sf-adm").checked }, ch.v);
   const dup = findDup(f, id);
   if (dup) return say("ซ้ำกับรายการ “" + dup.name + "” (ชื่อหรือช่องทางเหมือนกัน)", "err");
   const btn = $("#sf-save"); btn.disabled = true; say("กำลังบันทึก…");
@@ -872,8 +873,8 @@ function getToken() {
   S.token = t;
   return t;
 }
-const siteFromRow = r => ({ id: r.id, name: r.name, desc: r.description, categoryId: r.category_id, url: r.url || "", facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", logo: r.logo || "", visible: r.visible, featured: r.featured, createdAt: Date.parse(r.created_at), updatedAt: Date.parse(r.updated_at) });
-const siteToRow = f => ({ name: f.name, description: f.desc, category_id: f.categoryId, url: f.url || "", facebook: f.facebook || "", instagram: f.instagram || "", email: f.email || "", phone: f.phone || "", line: f.line || "", logo: f.logo || "", visible: f.visible, updated_at: new Date().toISOString() });
+const siteFromRow = r => ({ id: r.id, name: r.name, desc: r.description, categoryId: r.category_id, url: r.url || "", facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", logo: r.logo || "", visible: r.visible, featured: r.featured, adminOwned: !!r.admin_owned, createdAt: Date.parse(r.created_at), updatedAt: Date.parse(r.updated_at) });
+const siteToRow = f => ({ name: f.name, description: f.desc, category_id: f.categoryId, url: f.url || "", facebook: f.facebook || "", instagram: f.instagram || "", email: f.email || "", phone: f.phone || "", line: f.line || "", logo: f.logo || "", visible: f.visible, admin_owned: f.adminOwned, updated_at: new Date().toISOString() });
 const catFromRow = r => ({ id: r.id, name: r.name, desc: r.description || "", order: r.sort_order || 0 });
 const reqFromRow = r => ({ id: r.id, type: r.type, siteId: r.site_id || "", name: r.name, url: r.url || "", desc: r.description, categoryId: r.category_id, facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", contact: r.contact || "", requesterName: r.requester_name || "", logo: r.logo || "", createdAt: Date.parse(r.created_at) });
 
