@@ -7,8 +7,6 @@ const DEFAULT_SETTINGS = {
   adminFacebook: "",
   adminInstagram: ""
 };
-/* จำนวนรายการในส่วน "แนะนำ" หน้าแรก */
-const HOME_LIMIT = 10;
 /* ไฟล์รูปโลโก้กลางหน้าแรก: วางไฟล์ไว้โฟลเดอร์เดียวกับ index.html แล้วแก้ชื่อไฟล์ที่นี่ */
 const HERO_LOGO = "logo.png";
 /* ข้อความลิขสิทธิ์และเครดิตท้ายเว็บ: แก้ในโค้ดเท่านั้น ไม่แสดงในหน้าตั้งค่า (เว้น CREDIT ว่างไว้ถ้าไม่ต้องการแสดง) */
@@ -331,10 +329,10 @@ build.home = () => {
 fill.home = () => {
   setHtml("#home-chips", chipsHtml(S.homeCat, "home-cat"));
   const base = pub().filter(s => S.homeCat === "all" || s.categoryId === S.homeCat);
-  /* แสดงรวม HOME_LIMIT รายการ: ที่แอดมินเลือกแนะนำขึ้นก่อน ที่เหลือเติมด้วยรายการใหม่ล่าสุดอัตโนมัติ */
-  const picked = base.filter(s => s.featured).sort(byNew).slice(0, HOME_LIMIT);
-  const fillers = base.filter(s => !s.featured).sort(byNew).slice(0, HOME_LIMIT - picked.length);
-  const shown = picked.concat(fillers);
+  /* แสดงทุกรายการในหมวดที่เลือก (ไม่จำกัดจำนวน): ที่แอดมินเลือกแนะนำขึ้นก่อน ที่เหลือเรียงตามใหม่ล่าสุด */
+  const picked = base.filter(s => s.featured).sort(byNew);
+  const rest = base.filter(s => !s.featured).sort(byNew);
+  const shown = picked.concat(rest);
   const none = base.length === 0 && S.ready.sites && S.db && S.homeCat !== "all"
     ? emptyHtml("search", "ยังไม่มีรายการในหมวดนี้", "ลองเลือกหมวดอื่น") : sitesEmpty();
   setHtml("#feat", gridOrEmpty(shown, none));
@@ -638,7 +636,7 @@ async function moveCat(id, dir) {
   catch (err) { toast(errText(err), "err"); }
 }
 
-build["a-featured"] = () => { setHtml("#aview", aHead("รายการแนะนำ", "รายการที่เปิดสวิตช์จะขึ้นก่อนในส่วน “แนะนำ” ของหน้าแรก (สูงสุด 10 รายการ) ที่เหลือระบบเติมด้วยรายการที่เพิ่มใหม่ล่าสุดให้ครบอัตโนมัติ") + '<div class="list" id="a-feat"></div>'); };
+build["a-featured"] = () => { setHtml("#aview", aHead("รายการแนะนำ", "รายการที่เปิดสวิตช์จะขึ้นก่อนในหน้าแรก ส่วนที่เหลือเรียงตามรายการที่เพิ่มใหม่ล่าสุด (หน้าแรกแสดงทุกรายการ ไม่จำกัดจำนวน)") + '<div class="list" id="a-feat"></div>'); };
 fill["a-featured"] = () => {
   const list = S.sites.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "th"));
   setHtml("#a-feat", list.length ? list.map(s => '<div class="item"><div class="cat-row"><div class="info"><strong>' + esc(s.name) + '</strong><span class="small muted">' + esc(catName(s.categoryId)) + (s.visible === false ? " · ซ่อนอยู่" : "") + '</span></div><label class="switch"><input type="checkbox" class="js-feat" data-id="' + esc(s.id) + '"' + (s.featured ? " checked" : "") + ' aria-label="แนะนำ ' + esc(s.name) + '"> แนะนำ</label></div></div>').join("") : emptyHtml("star", "ยังไม่มีรายการ", "เพิ่มรายการก่อนแล้วค่อยเลือกรายการแนะนำ"));
