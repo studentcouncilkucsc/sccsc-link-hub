@@ -45,10 +45,9 @@ const ICONS = {
   up:'<path d="M12 19V5M5 12l7-7 7 7"/>',
   down:'<path d="M12 5v14M19 12l-7 7-7-7"/>',
   inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
-  grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
   phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
   mail:'<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/>',
-  message:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+  message:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>'
 };
 function ic(n, s, fill) {
   s = s || 20;
@@ -109,7 +108,6 @@ function normalizeUrl(v) {
   try { const u = new URL(v); return /^https?:$/.test(u.protocol) && u.hostname.includes(".") ? u.href : null; } catch (e) { return null; }
 }
 function fmtDate(ts) { try { return ts ? new Date(ts).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) : "-"; } catch (e) { return "-"; } }
-function newId() { return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 const byNew = (a, b) => (b.createdAt || 0) - (a.createdAt || 0);
 /* ทำลิงก์/ชื่อให้เป็นรูปแบบกลางก่อนเทียบ: ไม่สนตัวพิมพ์ ช่องว่าง https www m. และ / ท้าย */
 function normSocial(v) { return String(v || "").trim().toLowerCase().replace(/^https?:\/\/((www|m)\.)?/, "").replace(/[\/?#]+$/, ""); }
@@ -148,7 +146,7 @@ function errText(e) {
   if (/too_many|rate/i.test(m)) return "ส่งถี่เกินไป รอสักครู่แล้วลองใหม่";
   if (/row-level security|permission|42501|JWT/i.test(m)) return "ไม่มีสิทธิ์ทำรายการนี้ ลองเข้าสู่ระบบใหม่";
   if (/foreign key|23503/i.test(m)) return "ลบไม่ได้ เพราะยังมีข้อมูลที่อ้างอิงอยู่";
-  if (/not_owner/i.test(m)) return "ชื่อ-นามสกุลหรือช่องทางติดต่อไม่ตรงกับที่ใช้ตอนเพิ่มรายการนี้ (หรือรายการนี้ผู้ดูแลเป็นคนเพิ่ม) ลองตรวจสอบอีกครั้งหรือติดต่อผู้ดูแล";
+  if (/not_owner/i.test(m)) return "ชื่อ-นามสกุลหรือช่องทางติดต่อไม่ตรงกับที่ใช้ตอนเพิ่มรายการนี้ ลองตรวจสอบอีกครั้งหรือติดต่อผู้ดูแล";
   if (/duplicate key|23505|unique/i.test(m)) return "มีหน่วยงานชื่อนี้ หรือช่องทางนี้ (Facebook/Instagram) อยู่ในระบบแล้ว";
   return "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง";
 }
@@ -457,9 +455,6 @@ function fillFromSite(id) {
   $("#f-cat").value = s.categoryId || "";
   $("#f-count").textContent = $("#f-desc").value.length + " / 200";
 }
-function goEdit(id) {
-  go("submit"); setType("edit"); $("#f-site").value = id; fillFromSite(id); $("#f-name").focus();
-}
 async function submitRequest() {
   const msg = $("#f-msg"), say = (t, k) => { msg.textContent = t || ""; msg.className = "msg" + (k ? " " + k : ""); };
   const type = curType(), siteId = $("#f-site").value, name = $("#f-name").value.trim();
@@ -566,7 +561,7 @@ fill["a-sites"] = () => {
   const q = S.adminQ.trim().toLowerCase();
   const list = S.sites.filter(s => matches(s, q)).sort(byNew);
   if (!list.length) return setHtml("#a-list", S.ready.sites ? emptyHtml("globe", q ? "ไม่พบรายการที่ตรงกัน" : "ยังไม่มีรายการ", q ? "ลองค้นหาด้วยคำอื่น" : "กด “เพิ่มรายการ” เพื่อเริ่มต้น") : emptyHtml("globe", "กำลังโหลด…", ""));
-  const stTag = s => s.visible === false ? '<span class="tag">ซ่อน</span>' : '<span class="tag ok">แสดง</span>';
+  const stTag = s => (s.visible === false ? '<span class="tag">ซ่อน</span>' : '<span class="tag ok">แสดง</span>') + (s.adminOwned ? '<span class="tag">แอดมินเพิ่ม</span>' : "");
   const acts = s => '<div class="row-actions"><button type="button" class="btn sm" data-act="toggle-vis" data-id="' + esc(s.id) + '">' + (s.visible === false ? "แสดง" : "ซ่อน") + '</button><button type="button" class="btn sm" data-act="edit-site" data-id="' + esc(s.id) + '">' + ic("edit", 15) + ' แก้ไข</button><button type="button" class="btn sm danger" data-act="del-site" data-id="' + esc(s.id) + '">' + ic("trash", 15) + " ลบ</button></div>";
   setHtml("#a-list", '<div class="only-d"><div class="tbl-wrap"><table><thead><tr><th>ชื่อหน่วยงาน</th><th>หมวดหมู่</th><th>ช่องทาง</th><th>สถานะ</th><th>วันที่เพิ่ม</th><th></th></tr></thead><tbody>' +
     list.map(s => "<tr><td><strong>" + esc(s.name) + "</strong></td><td>" + esc(catName(s.categoryId)) + '</td><td>' + chanIcons(s) + "</td><td>" + stTag(s) + "</td><td>" + esc(fmtDate(s.createdAt)) + '</td><td class="ta-r">' + acts(s) + "</td></tr>").join("") +
@@ -584,6 +579,7 @@ function openSiteForm(id) {
     '<div class="field"><label for="sf-cat">หมวดหมู่</label><select id="sf-cat">' + catOptionsHtml(s && s.categoryId) + "</select></div>" +
     channelFields("sf", s) +
     '<label class="switch"><input type="checkbox" id="sf-vis"' + (!s || s.visible !== false ? " checked" : "") + '> แสดงบนหน้าเว็บ</label>' +
+    '<label class="switch"><input type="checkbox" id="sf-adm"' + (!s || s.adminOwned ? " checked" : "") + '> แอดมินเป็นคนเพิ่ม (ผู้ใช้ขอลบได้โดยไม่ต้องยืนยันตัวตน แอดมินยังต้องอนุมัติ)</label>' +
     '<div class="actions"><span class="msg" id="sf-msg" role="status" style="margin-right:auto"></span><button type="button" class="btn" data-act="m-close">ยกเลิก</button><button type="submit" class="btn primary" id="sf-save">บันทึก</button></div></form>');
 }
 async function saveSite() {
@@ -593,7 +589,7 @@ async function saveSite() {
   if (name.length < 2) return say("ใส่ชื่ออย่างน้อย 2 ตัวอักษร", "err");
   if (!desc) return say("ใส่คำอธิบายสั้นๆ", "err");
   const ch = readChannels("sf"); if (ch.error) return say(ch.error, "err");
-  const f = Object.assign({ name, desc, categoryId, visible: $("#sf-vis").checked }, ch.v);
+  const f = Object.assign({ name, desc, categoryId, visible: $("#sf-vis").checked, adminOwned: $("#sf-adm").checked }, ch.v);
   const dup = findDup(f, id);
   if (dup) return say("ซ้ำกับรายการ “" + dup.name + "” (ชื่อหรือช่องทางเหมือนกัน)", "err");
   const btn = $("#sf-save"); btn.disabled = true; say("กำลังบันทึก…");
@@ -606,18 +602,16 @@ async function saveSite() {
 }
 
 build["a-cats"] = () => {
-  setHtml("#aview", aHead("หมวดหมู่", "เพิ่ม แก้ไขชื่อ ลบ และจัดลำดับหมวดหมู่", '<button type="button" class="btn primary" data-act="add-cat">' + ic("plus", 18) + " เพิ่มหมวดหมู่</button>") + '<div id="a-cat-note"></div><div class="list" id="a-cat-list"></div>');
+  setHtml("#aview", aHead("หมวดหมู่", "เพิ่ม แก้ไขชื่อ ลบ และจัดลำดับหมวดหมู่", '<button type="button" class="btn primary" data-act="add-cat">' + ic("plus", 18) + " เพิ่มหมวดหมู่</button>") + '<div class="list" id="a-cat-list"></div>');
 };
 fill["a-cats"] = () => {
-  const isDef = false;
-  setHtml("#a-cat-note", isDef && S.ready.cats ? '<div class="note" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">หมวดหมู่ด้านล่างเป็นค่าเริ่มต้น ยังไม่ได้บันทึกลงระบบ<button type="button" class="btn sm primary" data-act="save-defaults">บันทึกหมวดเริ่มต้น</button></div>' : "");
   const counts = {}; S.sites.forEach(s => { counts[s.categoryId] = (counts[s.categoryId] || 0) + 1; });
   const list = cats();
   setHtml("#a-cat-list", list.map((c, i) => '<div class="item"><div class="cat-row"><div class="info"><strong>' + esc(c.name) + '</strong><span class="small muted">' + esc(c.desc) + " · " + (counts[c.id] || 0) + ' รายการ</span></div><div class="row-actions">' +
-    '<button type="button" class="btn sm" data-act="cat-up" data-id="' + esc(c.id) + '" aria-label="เลื่อนขึ้น"' + (i === 0 || isDef ? " disabled" : "") + ">" + ic("up", 15) + "</button>" +
-    '<button type="button" class="btn sm" data-act="cat-down" data-id="' + esc(c.id) + '" aria-label="เลื่อนลง"' + (i === list.length - 1 || isDef ? " disabled" : "") + ">" + ic("down", 15) + "</button>" +
-    '<button type="button" class="btn sm" data-act="edit-cat" data-id="' + esc(c.id) + '"' + (isDef ? " disabled" : "") + ">" + ic("edit", 15) + ' แก้ไข</button>' +
-    '<button type="button" class="btn sm danger" data-act="del-cat" data-id="' + esc(c.id) + '"' + (isDef ? " disabled" : "") + ">" + ic("trash", 15) + " ลบ</button></div></div></div>").join(""));
+    '<button type="button" class="btn sm" data-act="cat-up" data-id="' + esc(c.id) + '" aria-label="เลื่อนขึ้น"' + (i === 0 ? " disabled" : "") + ">" + ic("up", 15) + "</button>" +
+    '<button type="button" class="btn sm" data-act="cat-down" data-id="' + esc(c.id) + '" aria-label="เลื่อนลง"' + (i === list.length - 1 ? " disabled" : "") + ">" + ic("down", 15) + "</button>" +
+    '<button type="button" class="btn sm" data-act="edit-cat" data-id="' + esc(c.id) + '">' + ic("edit", 15) + ' แก้ไข</button>' +
+    '<button type="button" class="btn sm danger" data-act="del-cat" data-id="' + esc(c.id) + '">' + ic("trash", 15) + " ลบ</button></div></div></div>").join(""));
 };
 function openCatForm(id) {
   const c = id ? S.cats.find(x => x.id === id) : null;
@@ -685,12 +679,14 @@ async function decide(id, approve) {
         must(await sb.from("sites").delete().eq("id", siteId));
       }
     } else if (approve) {
-      const f = { name: req.name, desc: req.desc, categoryId: req.categoryId, url: req.url || "", facebook: req.facebook || "", instagram: req.instagram || "", email: req.email || "", phone: req.phone || "", line: req.line || "", visible: true };
+      /* รายการที่มาจากคำขอผู้ใช้ ไม่ใช่รายการที่แอดมินเพิ่มเอง (adminOwned: false) */
+      const f = { name: req.name, desc: req.desc, categoryId: req.categoryId, url: req.url || "", facebook: req.facebook || "", instagram: req.instagram || "", email: req.email || "", phone: req.phone || "", line: req.line || "", visible: true, adminOwned: false };
       const isEdit = req.type === "edit" && S.sites.some(s => s.id === siteId);
       const dup = findDup(f, isEdit ? siteId : "");
       if (dup) { toast("ซ้ำกับรายการ “" + dup.name + "” อนุมัติไม่ได้ ให้ปฏิเสธหรือแก้รายการเดิมแทน", "err"); refresh(); return; }
       if (isEdit) {
-        const row = siteToRow(f); delete row.visible;
+        /* ตอนแก้ไข ไม่ทับสถานะการแสดงผลและสถานะเจ้าของเดิม */
+        const row = siteToRow(f); delete row.visible; delete row.admin_owned;
         must(await sb.from("sites").update(row).eq("id", siteId));
       } else {
         const ins = must(await sb.from("sites").insert(Object.assign(siteToRow(f), { featured: false })).select("id").single());
@@ -736,7 +732,6 @@ document.addEventListener("click", async e => {
     case "fav": toggleFav(id); refresh(); break;
     case "home-cat": S.homeCat = id; fill.home(); break;
     case "search-cat": S.searchCat = id; fill.search(); break;
-    case "edit-req": goEdit(id); break;
     case "clear-search": S.q = ""; S.searchCat = "all"; $("#sq").value = ""; fill.search(); $("#sq").focus(); break;
     case "logout": if (sb) await sb.auth.signOut(); S.isAdmin = false; S.allRequests = []; go("home"); break;
     case "toggle-pw": { const i = $("#lf-pw"), show = i.type === "password"; i.type = show ? "text" : "password"; $("#lf-toggle").textContent = show ? "ซ่อน" : "แสดง"; break; }
@@ -809,7 +804,7 @@ document.addEventListener("keydown", e => {
 
 /* ---------- ข้อมูลจาก Supabase ---------- */
 /* เลือกเฉพาะคอลัมน์ที่ใช้ ไม่ดึงคอลัมน์ logo (ข้อมูลเดิมยังอยู่ในฐานข้อมูลแต่ไม่ถูกโหลดมา) */
-const SITE_COLS = "id,name,description,category_id,url,facebook,instagram,email,phone,line,visible,featured,created_at,updated_at";
+const SITE_COLS = "id,name,description,category_id,url,facebook,instagram,email,phone,line,visible,featured,admin_owned,created_at,updated_at";
 const REQUEST_COLS = "id,type,site_id,name,url,description,category_id,facebook,instagram,email,phone,line,contact,requester_name,status,admin_note,created_at";
 function must(res) { if (res && res.error) throw res.error; return res; }
 function getToken() {
@@ -823,8 +818,8 @@ function getToken() {
   S.token = t;
   return t;
 }
-const siteFromRow = r => ({ id: r.id, name: r.name, desc: r.description, categoryId: r.category_id, url: r.url || "", facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", visible: r.visible, featured: r.featured, createdAt: Date.parse(r.created_at), updatedAt: Date.parse(r.updated_at) });
-const siteToRow = f => ({ name: f.name, description: f.desc, category_id: f.categoryId, url: f.url || "", facebook: f.facebook || "", instagram: f.instagram || "", email: f.email || "", phone: f.phone || "", line: f.line || "", visible: f.visible, updated_at: new Date().toISOString() });
+const siteFromRow = r => ({ id: r.id, name: r.name, desc: r.description, categoryId: r.category_id, url: r.url || "", facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", visible: r.visible, featured: r.featured, adminOwned: !!r.admin_owned, createdAt: Date.parse(r.created_at), updatedAt: Date.parse(r.updated_at) });
+const siteToRow = f => ({ name: f.name, description: f.desc, category_id: f.categoryId, url: f.url || "", facebook: f.facebook || "", instagram: f.instagram || "", email: f.email || "", phone: f.phone || "", line: f.line || "", visible: f.visible, admin_owned: !!f.adminOwned, updated_at: new Date().toISOString() });
 const catFromRow = r => ({ id: r.id, name: r.name, desc: r.description || "", order: r.sort_order || 0 });
 const reqFromRow = r => ({ id: r.id, type: r.type, siteId: r.site_id || "", name: r.name, url: r.url || "", desc: r.description, categoryId: r.category_id, facebook: r.facebook || "", instagram: r.instagram || "", email: r.email || "", phone: r.phone || "", line: r.line || "", contact: r.contact || "", requesterName: r.requester_name || "", createdAt: Date.parse(r.created_at) });
 
