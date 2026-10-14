@@ -13,7 +13,7 @@ const HOME_LIMIT = 10;
 const HERO_LOGO = "logo.png";
 /* ข้อความลิขสิทธิ์และเครดิตท้ายเว็บ: แก้ในโค้ดเท่านั้น ไม่แสดงในหน้าตั้งค่า (เว้น CREDIT ว่างไว้ถ้าไม่ต้องการแสดง) */
 const COPYRIGHT_NAME = "KUSC.CSC";
-const CREDIT = "ชื่อผู้จัดทำ";   // เช่น "จัดทำโดย สมชาย ใจดี"
+const CREDIT = "Paphawarin.sir";   // เช่น "จัดทำโดย สมชาย ใจดี"
 /* ลิงก์ติดต่อผู้ดูแลที่ส่วนท้ายเว็บ: แก้ที่นี่ที่เดียว ไม่ต้องแก้ฐานข้อมูล (เว้นว่างได้) */
 const ADMIN_LINKS = {
   facebook: "",   // เช่น "https://www.facebook.com/ชื่อเพจ"
@@ -448,7 +448,7 @@ function paintSiteOptions() {
   setOptions("#f-site", '<option value="">เลือกรายการ…</option>' + list.map(s => '<option value="' + esc(s.id) + '">' + esc(s.name) + "</option>").join(""));
   if (!list.some(s => s.id === prev)) el.value = "";
   const h = $("#f-site-hint");
-  if (h) h.textContent = del ? "ถ้าเป็นรายการที่ผู้ดูแลเพิ่ม ใครก็ขอลบได้ แต่ถ้าผู้ใช้ขอเพิ่มไว้ ต้องกรอกชื่อ-นามสกุลและช่องทางติดต่อด้านล่างให้ตรงกับที่ใช้ตอนขอเพิ่ม" : "";
+  if (h) h.textContent = del ? "ถ้าเป็นรายการที่ผู้ดูแลเพิ่ม สามารถขอลบได้ แต่ถ้าผู้ใช้ขอเพิ่มไว้ ต้องกรอกชื่อ-นามสกุลและช่องทางติดต่อด้านล่างให้ตรงกับที่ใช้ตอนขอเพิ่ม" : "";
 }
 function curType() { return $('input[name="f-type"]:checked').value; }
 function setType(t) {
